@@ -38,6 +38,7 @@ define([
 
         this.clock = options.clock;
         this.element = options.element;
+        this._clockScale = defaultValue(options.clockScale, 1.0);
 
         /**
          * Gets or sets the simulation time that marks the start of the video.
@@ -172,11 +173,11 @@ define([
             return;
         }
 
-        element.playbackRate = clock.multiplier;
+        element.playbackRate = clock.multiplier / this._clockScale;
 
         var clockTime = clock.currentTime;
         var epoch = defaultValue(this.epoch, Iso8601.MINIMUM_VALUE);
-        var videoTime = JulianDate.secondsDifference(clockTime, epoch);
+        var videoTime = JulianDate.secondsDifference(clockTime, epoch) / this._clockScale;
 
         var duration = element.duration;
         var desiredTime;

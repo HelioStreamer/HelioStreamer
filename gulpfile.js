@@ -76,8 +76,6 @@ var filesToClean = ['Source/Cesium.js',
                     'Source/Shaders/**/*.js',
                     'Source/ThirdParty/Shaders/*.js',
                     'Specs/SpecList.js',
-                    'Apps/Sandcastle/jsHintOptions.js',
-                    'Apps/Sandcastle/gallery/gallery-index.js',
                     'Cesium-*.zip'];
 
 var filesToSortRequires = ['Source/**/*.js',
@@ -87,17 +85,11 @@ var filesToSortRequires = ['Source/**/*.js',
                            '!Source/copyrightHeader.js',
                            '!Source/Workers/transferTypedArrayTest.js',
                            'Apps/**/*.js',
-                           '!Apps/Sandcastle/ThirdParty/**',
-                           '!Apps/Sandcastle/jsHintOptions.js',
                            'Specs/**/*.js',
                            '!Specs/spec-main.js',
                            '!Specs/SpecRunner.js',
                            '!Specs/SpecList.js',
-                           '!Specs/karma.conf.js',
-                           '!Apps/Sandcastle/Sandcastle-client.js',
-                           '!Apps/Sandcastle/Sandcastle-header.js',
-                           '!Apps/Sandcastle/Sandcastle-warn.js',
-                           '!Apps/Sandcastle/gallery/gallery-index.js'];
+                           '!Specs/karma.conf.js',];
 
 gulp.task('default', ['combine']);
 
@@ -106,7 +98,6 @@ gulp.task('build', function(done) {
     glslToJavaScript(minifyShaders, 'Build/minifyShaders.state');
     createCesiumJs();
     createSpecList();
-    createGalleryList();
     createJsHintOptions();
     done();
 });
@@ -117,8 +108,7 @@ gulp.task('build-watch', function() {
 
 gulp.task('buildApps', function() {
     return Promise.join(
-        buildCesiumViewer(),
-        buildSandcastle()
+        buildCesiumViewer()
     );
 });
 
@@ -1160,16 +1150,12 @@ var has_new_gallery_demos = ' + (newDemos.length > 0 ? 'true;' : 'false;');
 
 function createJsHintOptions() {
     var primary = JSON.parse(fs.readFileSync(path.join('Apps', '.jshintrc'), 'utf8'));
-    var gallery = JSON.parse(fs.readFileSync(path.join('Apps', 'Sandcastle', '.jshintrc'), 'utf8'));
     primary.jasmine = false;
-    primary.predef = gallery.predef;
-    primary.unused = gallery.unused;
 
     var contents = '\
 // This file is automatically rebuilt by the Cesium build process.\n\
 var sandcastleJsHintOptions = ' + JSON.stringify(primary, null, 4) + ';';
 
-    fs.writeFileSync(path.join('Apps', 'Sandcastle', 'jsHintOptions.js'), contents);
 }
 
 function buildSandcastle() {
