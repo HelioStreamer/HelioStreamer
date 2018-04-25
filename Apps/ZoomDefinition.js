@@ -18,7 +18,7 @@ ZoomDefinition.prototype.generateTiles = function(viewer, display) {
       videoElement.muted = true;
       videoElement.loop = true;
       
-      videoElement.src = 'gray.mp4';//videoname + x + '_' + y '.mp4';
+      videoElement.src = this.videoName + x + '_' + y + '.mp4';
       
       var videoMaterial = Cesium.Material.fromType('Image');
       videoMaterial.translucent = false;

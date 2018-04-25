@@ -56,10 +56,10 @@
     // Define different zoom settings. 
     // The globe is the earth that we redraw so not 100% accurate with the real world distances.
     var zooms = [];
-    zooms.push(new ZoomDefinition(1, 1, 80000000, 't1'));
-    zooms.push(new ZoomDefinition(2, 2, 30000000, 't2'));
-    zooms.push(new ZoomDefinition(4, 4, 17000000, 't3'));
-    zooms.push(new ZoomDefinition(8, 8, 11000000, 't4'));
+    zooms.push(new ZoomDefinition(1, 1, 80000000, 'z0t_'));
+    zooms.push(new ZoomDefinition(2, 2, 30000000, 'z1t_'));
+    //zooms.push(new ZoomDefinition(4, 4, 17000000, 't2'));
+    //zooms.push(new ZoomDefinition(8, 8, 11000000, 't3'));
     
     // We sort them so we don't need to iterate over the whole list when zooming
     zooms.sort(function(a, b) {
@@ -138,7 +138,7 @@
     // Zooming level
     var activeZoom = 0;
     // The tile which is played. All tiles around will also be played.
-    var targetIndex = 1;
+    var targetIndex = 0;
     
     // We generate the tiles and add it to the scene.
     // The current zooming level is displayed while the others are hidden.
@@ -177,7 +177,8 @@
         for(var i = 0; i < 9; i++) {
           var elem = sync[i].element;
           sync[i].element = null;
-          elem.pause();
+          if(elem != null)
+            elem.pause();
         }
         targetIndex = newTargetIndex;
         var syncIndex = 0;
@@ -192,6 +193,17 @@
         }
       }
     });
+    
+    var syncIndex = 0;
+    // Change the synchronizer target and play the target tile and the tiles around it.
+    for(var i = -1; i <= 1; i++) {
+      for(var j = -1; j <= 1; j++) {
+        var index = targetIndex+i*zooms[activeZoom].xTiles+j;
+        if(index < zooms[activeZoom].tiles.length && index >= 0) {
+          sync[syncIndex++].element = zooms[activeZoom].tiles[index].appearance.material.uniforms.image;
+        }
+      }
+    }
     
     // Older browsers do not support WebGL video textures,
     // put up a friendly error message indicating such.
