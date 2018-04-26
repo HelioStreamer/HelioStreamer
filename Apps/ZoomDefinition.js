@@ -5,7 +5,6 @@ var ZoomDefinition = function (xTiles, yTiles, maxZoomLevel, videoName) {
   this.videoName = videoName;
 }
     
-    
 ZoomDefinition.prototype.generateTiles = function(viewer, display) {
   this.tiles = [];
   var moveX = 180 / this.xTiles;
@@ -16,7 +15,7 @@ ZoomDefinition.prototype.generateTiles = function(viewer, display) {
       var videoElement = document.createElement('video')
       videoElement.autoplay = false;
       videoElement.muted = true;
-      videoElement.loop = true;
+      videoElement.loop = false;
       
       videoElement.src = this.videoName + x + '_' + y + '.mp4';
       
@@ -39,6 +38,16 @@ ZoomDefinition.prototype.generateTiles = function(viewer, display) {
           show : display
       })));
     }
+  }
+}
+
+ZoomDefinition.prototype.setVideoName = function(videoName) {
+  var self = this;
+  self.videoName = videoName;
+  if(self.tiles != null) {
+    self.tiles.forEach(function (tile) {
+      tile.appearance.material.uniforms.image.src = self.videoName + x + '_' + y + '.mp4';
+    });
   }
 }
 

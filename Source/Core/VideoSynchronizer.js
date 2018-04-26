@@ -38,7 +38,7 @@ define([
 
         this.clock = options.clock;
         this.element = options.element;
-        this._clockScale = defaultValue(options.clockScale, 1.0);
+        this.clockScale = defaultValue(options.clockScale, 1.0);
 
         /**
          * Gets or sets the simulation time that marks the start of the video.
@@ -173,15 +173,15 @@ define([
             return;
         }
 
-        element.playbackRate = clock.multiplier / this._clockScale;
+        element.playbackRate = clock.multiplier / this.clockScale;
 
         var clockTime = clock.currentTime;
         var epoch = defaultValue(this.epoch, Iso8601.MINIMUM_VALUE);
-        var videoTime = JulianDate.secondsDifference(clockTime, epoch) / this._clockScale;
+        var videoTime = JulianDate.secondsDifference(clockTime, epoch);
 
-        var duration = element.duration;
+        var duration = element.duration * this.clockScale;
         var desiredTime;
-        var currentTime = element.currentTime;
+        var currentTime = element.currentTime * this.clockScale;
         if (element.loop) {
             videoTime = videoTime % duration;
             if (videoTime < 0.0) {
@@ -199,9 +199,9 @@ define([
         //If the playing video's time and the scene's clock time
         //ever drift too far apart, we want to set the video to match
         var tolerance = shouldAnimate ? defaultValue(this.tolerance, 1.0) : 0.001;
-        if (Math.abs(desiredTime - currentTime) > tolerance) {
+        if (Math.abs(desiredTime - currentTime) > tolerance * this.clockScale) {
             this._seeking = true;
-            element.currentTime = desiredTime;
+            element.currentTime = desiredTime / this.clockScale;
         }
     };
 

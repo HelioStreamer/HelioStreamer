@@ -10,6 +10,7 @@
   <title>HelioViewer</title>
   <script src="../Build/Cesium/Cesium.js"></script>
   <script src="./ZoomDefinition.js"></script>
+  <script src="./ScalableVideoStreamer.js"></script>
   <style>
       @import url(../Build/Cesium/Widgets/widgets.css);
       html, body, #cesiumContainer {
@@ -54,165 +55,16 @@
     'use strict';
     
     // Define different zoom settings. 
-    // The globe is the earth that we redraw so not 100% accurate with the real world distances.
+    // The globe is the earth that we redraw so zoom height is not the same as the real world distances.
     var zooms = [];
     zooms.push(new ZoomDefinition(1, 1, 80000000, 'z0t_'));
     zooms.push(new ZoomDefinition(2, 2, 30000000, 'z1t_'));
-    //zooms.push(new ZoomDefinition(4, 4, 17000000, 't2'));
-    //zooms.push(new ZoomDefinition(8, 8, 11000000, 't3'));
+    //zooms.push(new ZoomDefinition(4, 4, 17000000, 'z2t_'));
+    //zooms.push(new ZoomDefinition(8, 8, 11000000, 'z3t_'));
     
-    // We sort them so we don't need to iterate over the whole list when zooming
-    zooms.sort(function(a, b) {
-      return a.maxZoomLevel < b.maxZoomLevel;
-    });
-    
-    // Returns the tile in the screen center
-    function indexOfCenteredTile(tiles) {
-      var activeTile = viewer.scene.pick(Cesium.Cartesian2.fromElements(viewer.scene.drawingBufferWidth/2, viewer.scene.drawingBufferHeight/2));
-      if(activeTile == null)
-        return -1;
-      activeTile = activeTile.primitive;
-      for(var i = 0; i < tiles.length; i++) {
-        if(tiles[i] == activeTile)
-          return i;
-      }
-      return -1;
-    }
-    
-    // If the tile index is at the edge, we take the closest centered index.
-    // Could be used to ensure that 9 tiles are always playing 
-    /*function clampIndex(index, xTiles, yTiles) {
-      if(index-yTiles < 0)
-        index += yTiles;
-      else if(index+yTiles >= yTiles*xTiles)
-        index -= yTiles;
-      if(index % yTiles == 0)
-        index++;
-      else if((index+1) % yTiles == 0)
-        index--;
-      return index;
-    }*/
-    
-    // You could also provide a image provider with compressed textures.
-    //var imagery = new Cesium.SingleTileImageryProvider({
-    //    url: "./baseimage.jpg"
-    //});
-    
-    var viewer = new Cesium.Viewer("cesiumContainer", {
-        showRenderLoopErrors : false,
-        shouldAnimate : false,
-        baseLayerPicker: false,
-        sceneModePicker: false,
-        geocoder: false,
-        imageryProvider: false,
-        skyAtmosphere: false, 
-        targetFrameRate: 25
-    });
-    
-    // Globe color is blue by default.
-    // Change it to gray so it doesn't look too bad.
-    viewer.scene.globe.material =  Cesium.Material.fromType('Color');
-    viewer.scene.globe.material.uniforms.color = new Cesium.Color(0.1, 0.1, 0.1, 1.0);
-    
-    // We are the sun, we don't need it in the background.
-    viewer.scene.sun = null;
-    
-    // TODO multiplier should be the scaling that is defined by user.
-    // Default is FPS*30 as there are 30s between the images.
-    viewer.clock.multiplier = 750;
-    viewer.clock.clockRange = Cesium.ClockRange.CLAMPED;
-    
-    // Scale even after small changes
-    viewer.camera.percentageChanged = 0.01; 
-    
-    // Init Video Synchronizers
-    var sync = [];
-    for(var i = 0; i < 9; i++) {
-      sync.push(new Cesium.VideoSynchronizer({
-          clock : viewer.clock,
-          clockScale: 750
-      }));
-    }
-
-    // We define the variables that are required for zooming and playing selective videos.
-    // Zooming level
-    var activeZoom = 0;
-    // The tile which is played. All tiles around will also be played.
-    var targetIndex = 0;
-    
-    // We generate the tiles and add it to the scene.
-    // The current zooming level is displayed while the others are hidden.
-    zooms.forEach(function(z, i) {
-      z.generateTiles(viewer, activeZoom == i);
-    });
-    
-    // Changing zooming level and targeted tile.
-    viewer.camera.changed.addEventListener(function() {
-      // The height of the camera
-      var height = viewer.camera.getMagnitude();
-      
-      // In order to find a good height for scaling - add the following line and look at the console
-      // console.log(height);
-      
-      // We look for the first matching zooming level and activate it.
-      for(var i = zooms.length-1; i >= 0; i--) {
-        if(zooms[i].isInRange(height)) {
-          if(activeZoom != i) {
-            zooms[activeZoom].tiles.forEach(function(tile) {
-              tile.show = false;
-            });
-            activeZoom = i;
-            zooms[activeZoom].tiles.forEach(function(tile) {
-              tile.show = true;
-            });
-          }
-          break;
-        }
-      }
-      
-      // Check if new targeted tile
-      var newTargetIndex = indexOfCenteredTile(zooms[activeZoom].tiles);
-      if(newTargetIndex != -1 && newTargetIndex != targetIndex) {
-        // Stop old video from playing.
-        for(var i = 0; i < 9; i++) {
-          var elem = sync[i].element;
-          sync[i].element = null;
-          if(elem != null)
-            elem.pause();
-        }
-        targetIndex = newTargetIndex;
-        var syncIndex = 0;
-        // Change the synchronizer target and play the target tile and the tiles around it.
-        for(var i = -1; i <= 1; i++) {
-          for(var j = -1; j <= 1; j++) {
-            var index = newTargetIndex+i*zooms[activeZoom].xTiles+j;
-            if(index < zooms[activeZoom].tiles.length && index >= 0) {
-              sync[syncIndex++].element = zooms[activeZoom].tiles[index].appearance.material.uniforms.image;
-            }
-          }
-        }
-      }
-    });
-    
-    var syncIndex = 0;
-    // Change the synchronizer target and play the target tile and the tiles around it.
-    for(var i = -1; i <= 1; i++) {
-      for(var j = -1; j <= 1; j++) {
-        var index = targetIndex+i*zooms[activeZoom].xTiles+j;
-        if(index < zooms[activeZoom].tiles.length && index >= 0) {
-          sync[syncIndex++].element = zooms[activeZoom].tiles[index].appearance.material.uniforms.image;
-        }
-      }
-    }
-    
-    // Older browsers do not support WebGL video textures,
-    // put up a friendly error message indicating such.
-    viewer.scene.renderError.addEventListener(function(obj, err) {
-        if(!videoElement.paused){
-            videoElement.pause();
-        }
-        viewer.cesiumWidget.showErrorPanel("This browser does not support cross-origin WebGL video textures.", err.message, "");
-    });
+    var streamer = new ScalableVideoStreamer(zooms, 25);
+    streamer.setStartTime("2018-04-26T10:00:00");
+    streamer.setEndTime("2018-04-26T10:25:00");
   </script>
 </body>
 </html>
