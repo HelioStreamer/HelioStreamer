@@ -199,7 +199,9 @@ define([
         //If the playing video's time and the scene's clock time
         //ever drift too far apart, we want to set the video to match
         var tolerance = shouldAnimate ? defaultValue(this.tolerance, 1.0) : 0.001;
-        if (Math.abs(desiredTime - currentTime) > tolerance * this.clockScale) {
+        // If we play it slower it should sync more precise.
+        var toleranceClockScale = this.clock.multiplier < this.clockScale ? this.clock.multiplier : this.clockScale;
+        if (Math.abs(desiredTime - currentTime) > tolerance * toleranceClockScale) {
             this._seeking = true;
             element.currentTime = desiredTime / this.clockScale;
         }

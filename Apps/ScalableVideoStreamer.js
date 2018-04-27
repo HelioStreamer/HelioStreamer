@@ -26,7 +26,7 @@ function ScalableVideoStreamer(zooms, targetFPS = 25) {
   // Globe color is blue by default.
   // Change it to gray so it matches the video files.
   self.viewer.scene.globe.material =  Cesium.Material.fromType('Color');
-  self.viewer.scene.globe.material.uniforms.color = new Cesium.Color(0.1, 0.1, 0.1, 1.0);
+  self.viewer.scene.globe.material.uniforms.color = new Cesium.Color(0.0, 0.0, 0.0, 1.0);
   
   // We are the sun, we don't need it in the background.
   self.viewer.scene.sun = null;
@@ -57,9 +57,6 @@ function ScalableVideoStreamer(zooms, targetFPS = 25) {
     z.generateTiles(self.viewer, self.activeZoom == i);
   });
   
-  // Default is FPS*30 because a frame represents 30s
-  self.changeTimeScaling(targetFPS*30);
-  
   // Take the current targeted videos and add them to the synchronizers.
   self.synchronizeVideosOnTarget();
   
@@ -86,22 +83,40 @@ function ScalableVideoStreamer(zooms, targetFPS = 25) {
   });
 }
 
+// Change video path of all videos
+// This will only change the videos - time and scaling should be changed too
+ScalableVideoStreamer.prototype.setVideoPath = function(videoPath) {
+  // We stop the time when loading a new video source
+  this.viewer.clock.shouldAnimate = false;
+  this.zooms.forEach(function(zoom) {
+    zoom.setVideoPath(videoPath);
+  });
+}
+
+
 // Set the start time of the video.
 ScalableVideoStreamer.prototype.setStartTime = function(startTime, reset = true, play = false) {
   var self = this;
+  // Set if we play the video
   self.viewer.clock.shouldAnimate = play;
+  // Set start time of the clock
   self.viewer.clock.startTime = Cesium.JulianDate.fromIso8601(startTime);
+  // Change timeline to current time.
   self.viewer.timeline.zoomTo(self.viewer.clock.startTime, self.viewer.clock.stopTime);
+  // Change synchronizers of videos to this time.
   self.sync.forEach(function(s) {
     s.epoch = self.viewer.clock.startTime;
   });
+  // If the current time is set to start time
   if(reset)
     self.viewer.clock.currentTime = self.viewer.clock.startTime;
 }
 
 // Set the end time of the video.
 ScalableVideoStreamer.prototype.setEndTime = function(endTime) {
+  // Set stop time of the clock
   this.viewer.clock.stopTime = Cesium.JulianDate.fromIso8601(endTime);
+  // Change timeline to current time.
   this.viewer.timeline.zoomTo(this.viewer.clock.startTime, this.viewer.clock.stopTime);
 }
 

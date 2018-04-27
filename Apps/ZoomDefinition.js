@@ -1,8 +1,9 @@
-var ZoomDefinition = function (xTiles, yTiles, maxZoomLevel, videoName) {
+var ZoomDefinition = function (xTiles, yTiles, maxZoomLevel, videoName, videoPath = "./") {
   this.xTiles = xTiles;
   this.yTiles = yTiles;
   this.maxZoomLevel = maxZoomLevel;
   this.videoName = videoName;
+  this.videoPath = videoPath;
 }
     
 ZoomDefinition.prototype.generateTiles = function(viewer, display) {
@@ -15,9 +16,9 @@ ZoomDefinition.prototype.generateTiles = function(viewer, display) {
       var videoElement = document.createElement('video')
       videoElement.autoplay = false;
       videoElement.muted = true;
-      videoElement.loop = false;
+      videoElement.loop = true;
       
-      videoElement.src = this.videoName + x + '_' + y + '.mp4';
+      videoElement.src = this.videoPath + this.videoName + y + x + '' + '.mp4';
       
       var videoMaterial = Cesium.Material.fromType('Image');
       videoMaterial.translucent = false;
@@ -26,7 +27,7 @@ ZoomDefinition.prototype.generateTiles = function(viewer, display) {
       this.tiles.push(viewer.scene.primitives.add(new Cesium.Primitive({
           geometryInstances : new Cesium.GeometryInstance({
               geometry : new Cesium.RectangleGeometry({
-                  rectangle : Cesium.Rectangle.fromDegrees(-180.0 + moveX*x, -90.0 + moveY*y, -180.0 + moveX*(x+1), -90.0 + moveY*(y+1)),
+                  rectangle : Cesium.Rectangle.fromDegrees(-180.0 + moveX*x, 90.0 - moveY*(y+1), -180.0 + moveX*(x+1), 90.0 - moveY*y),
                   vertexFormat : Cesium.EllipsoidSurfaceAppearance.VERTEX_FORMAT
               })
           }),
@@ -41,12 +42,13 @@ ZoomDefinition.prototype.generateTiles = function(viewer, display) {
   }
 }
 
-ZoomDefinition.prototype.setVideoName = function(videoName) {
+ZoomDefinition.prototype.setVideoPath = function(videoPath) {
   var self = this;
-  self.videoName = videoName;
+  self.videoPath = videoPath;
   if(self.tiles != null) {
     self.tiles.forEach(function (tile) {
-      tile.appearance.material.uniforms.image.src = self.videoName + x + '_' + y + '.mp4';
+      var currentSrc = tile.appearance.material.uniforms.image.src.substring(tile.appearance.material.uniforms.image.src.indexOf(self.videoName))
+      tile.appearance.material.uniforms.image.src = self.videoPath + currentSrc;
     });
   }
 }

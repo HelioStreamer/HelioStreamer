@@ -8,63 +8,191 @@
   <!-- Make the application on mobile take up the full browser screen and disable user scaling. -->
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
   <title>HelioViewer</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="../Build/Cesium/Cesium.js"></script>
   <script src="./ZoomDefinition.js"></script>
   <script src="./ScalableVideoStreamer.js"></script>
   <style>
-      @import url(../Build/Cesium/Widgets/widgets.css);
-      html, body, #cesiumContainer {
-          width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
-      }
-      .toolbar-left {
-          display: block;
-          position: absolute;
-          top: 5px;
-          left: 5px;
-      }
-    #trailer {
+    @import url(../Build/Cesium/Widgets/widgets.css);
+    html, body, #cesiumContainer {
+        width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
+    }
+    .toolbar-left {
+        display: block;
         position: absolute;
-        bottom: 75px;
-        right: 0;
-        width: 320px;
-        height: 180px;
+        top: 5px;
+        left: 5px;
+        
+        background-color: rgba(40,40,40,0.7);
+        padding: 7px;
+        border-radius: 5px;
+        border: 1px solid #444;
+        font: bold 12px sans-serif;
+        
+        color: white;
+    }
+      
+    .toolbar-left > * {
+        margin: 5px;
+    }
+    
+    .flatpickr-calendar {
+        background-color: rgba(40,40,40,0.9);
+    }
+    
+    .flatpickr-day.selected {
+    }
+    
+    .input {
+        padding: 5px 8px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        box-shadow: none;
+        background: #fafafa;
+        background-image: none;
+        -webkit-appearance: none;
+    }
+    
+    
+    .select:focus {
+        outline: none;
     }
   </style>
 </head>
 <body>
   <div id="cesiumContainer"></div>
-  <div class="toolbar-left">
-    <button onclick=";">Start Date</button>
-    <button onclick=";">End Date</button>
-    <button onclick=";">Timescale (Min: 1/750)</button>
-    <!-- 2 images per minute provided - 25 images per second played -->
+  <div class=".cesium-viewer">
+    <div class="toolbar-left">
+      <input class="datetime input" id="start" type="text" placeholder="Select start date" data-input>
+      -
+      <input class="datetime input" id="end" type="text" placeholder="Select end date" data-input>
+      Playback-Speed:
+      <select class="input" onchange="changeScaling()" id="timescale">
+        <option value="1">1x</option>
+        <option value="2">2x</option>
+        <option value="4">4x</option>
+        <option value="8">8x</option>
+        <option value="16">16x</option>
+        <option value="32">32x</option>
+      </select>
+      <button class="cesium-button" id="load" onclick="loadNewVideo()">Load Video</button>
+    </div>
   </div>
   
-  <video id="t0" style="display: none;">
-  </video>
-  
-  <video id="t1" style="display: none;">
-  </video>
-  
-  <video id="t2" style="display: none;">
-  </video>
-  
-  <video id="t3" style="display: none;">
-  </video>
   <script>
     'use strict';
+    // EDIT THESE VALUES
+    const defaultTimeScaling = 750; // 1 frame = 30s | 25 FPS -> 25*30 = 750
+    const minVideoLength = 2; // seconds
+    var minPossibleStartDate = new Date("2017-01-01"); // TODO Load from server
+    var maxPossibleEndDate = new Date(); // TODO Load from server
+    // END EDIT
+    
+    // Only allow start of video - check against first video
+    var minTimeSeconds = minPossibleStartDate.getTime() / 1000;
+    
+    var maxPossibleStartDate = new Date(maxPossibleEndDate);
+    maxPossibleStartDate.setSeconds(maxPossibleStartDate.getSeconds() - defaultTimeScaling*minVideoLength);
+    
+    var startdatePicker = flatpickr("#start", {
+      enableTime: true,
+      time_24hr: true,
+      dateFormat: "d.m.Y H:i",
+      minDate: minPossibleStartDate,
+      maxDate: maxPossibleStartDate,
+      minuteIncrement: defaultTimeScaling*minVideoLength*document.getElementById("timescale").value/60,
+      onChange: function(date, s, i) {
+        date = new Date(date);
+        var secondsOff = (((date.getTime() / 1000) - minTimeSeconds) % (defaultTimeScaling*minVideoLength*document.getElementById("timescale").value));
+        if(secondsOff != 0) {
+          var secondsToAllowedTime = defaultTimeScaling*minVideoLength*document.getElementById("timescale").value - secondsOff;
+          // Sometimes the library does strange things. We call update again.
+          i.setDate(date.setSeconds(date.getSeconds() + secondsToAllowedTime), true);
+        } else {
+          var minEnddate = new Date(date);
+          minEnddate.setSeconds(minEnddate.getSeconds() +  defaultTimeScaling*minVideoLength*document.getElementById("timescale").value);
+          enddatePicker.set("minDate", minEnddate);
+        }
+      }
+    });
+    var enddatePicker = flatpickr("#end", {
+      enableTime: true,
+      time_24hr: true,
+      dateFormat: "d.m.Y H:i",
+      maxDate: maxPossibleEndDate,
+      minuteIncrement: defaultTimeScaling*minVideoLength*document.getElementById("timescale").value/60,
+      onChange: function(date, s, i) {
+        date = new Date(date);
+        var secondsOff = (((date.getTime() / 1000) - minTimeSeconds) % (defaultTimeScaling*minVideoLength*document.getElementById("timescale").value));
+        if(secondsOff != 0) {
+          var secondsToAllowedTime = defaultTimeScaling*minVideoLength*document.getElementById("timescale").value - secondsOff;
+          // Sometimes the library does strange things. We call update again.
+          date.setSeconds(date.getSeconds() + secondsToAllowedTime);
+          if((i.config.minDate == null || date > i.config.minDate) && date < i.config.maxDate)
+            i.setDate(date, true);
+          else
+            i.setDate(null, false);
+        }
+      }
+    });
     
     // Define different zoom settings. 
     // The globe is the earth that we redraw so zoom height is not the same as the real world distances.
     var zooms = [];
-    zooms.push(new ZoomDefinition(1, 1, 80000000, 'z0t_'));
-    zooms.push(new ZoomDefinition(2, 2, 30000000, 'z1t_'));
-    //zooms.push(new ZoomDefinition(4, 4, 17000000, 'z2t_'));
-    //zooms.push(new ZoomDefinition(8, 8, 11000000, 'z3t_'));
+    zooms.push(new ZoomDefinition(1, 1, 80000000, 't1_'));
+    zooms.push(new ZoomDefinition(2, 2, 30000000, 't4_'));
+    zooms.push(new ZoomDefinition(4, 4, 17000000, 't16_'));
+    zooms.push(new ZoomDefinition(8, 8, 11000000, 't64_'));
     
-    var streamer = new ScalableVideoStreamer(zooms, 25);
+    var streamer = new ScalableVideoStreamer(zooms, 32);
+    streamer.viewer.scene.debugShowFramesPerSecond = true;
+    
+    function changeScaling() {
+      startdatePicker.set("minuteIncrement", defaultTimeScaling*minVideoLength*document.getElementById("timescale").value/60);
+      enddatePicker.set("minuteIncrement", defaultTimeScaling*minVideoLength*document.getElementById("timescale").value/60);
+      
+      var startdate = startdatePicker.selectedDates[0];
+      if(startdate != null)
+        startdatePicker.setDate(startdate, true);
+        
+      var enddate = enddatePicker.selectedDates[0];
+      if(enddate != null)
+        enddatePicker.setDate(enddate, true);
+    }
+    
+    function loadNewVideo() {
+      var startdate = startdatePicker.selectedDates[0].toISOString();
+      var enddate = enddatePicker.selectedDates[0].toISOString();
+      var scaling = document.getElementById("timescale").value * defaultTimeScaling;
+      
+      // JS Ajax Request so we don't require too many 3rd party libraries.
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+          // TODO path format (JSON? only text?)
+          //streamer.setVideoPath(this.responseText);
+          
+          // TODO Hide Loading Screen
+        }
+      };
+      // TODO Set endpoint
+      xhttp.open("GET", "", true);
+      xhttp.send();
+      
+      // TODO Show Loading Screen
+      
+      streamer.setStartTime(startdate);
+      streamer.setEndTime(enddate);
+      streamer.changeTimeScaling(scaling);
+    }
+    
+    // Test values
+    // Default is FPS*30 because a frame represents 30s
+    streamer.changeTimeScaling(750);
     streamer.setStartTime("2018-04-26T10:00:00");
-    streamer.setEndTime("2018-04-26T10:25:00");
+    streamer.setEndTime("2018-04-26T18:20:00");
   </script>
 </body>
 </html>
