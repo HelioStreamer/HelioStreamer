@@ -20,8 +20,23 @@ ZoomDefinition.prototype.generateTiles = function(viewer, display) {
       
       videoElement.src = this.videoPath + this.videoName + y + x + '' + '.mp4';
       
-      var videoMaterial = Cesium.Material.fromType('Image');
+      /*var videoMaterial = Cesium.Material.fromType('Image');
       videoMaterial.translucent = false;
+      videoMaterial.uniforms.image = videoElement;*/
+      var videoMaterial = new Cesium.Material({
+        fabric : {
+            type : Cesium.Material.ImageType,
+            uniforms : {
+                image : Cesium.Material.DefaultImageId
+            },
+            components : {
+                diffuse : 'texture2D(image, materialInput.st).rrr'
+            }
+        },
+        translucent : function(material) {
+            return false;
+        }
+      });
       videoMaterial.uniforms.image = videoElement;
   
       this.tiles.push(viewer.scene.primitives.add(new Cesium.Primitive({
