@@ -714,11 +714,18 @@ define([
 
     function createTexture2DUpdateFunction(uniformId) {
         var oldUniformValue;
+		var oldTimestamp;
         return function(material, context) {
             var uniforms = material.uniforms;
+			
             var uniformValue = uniforms[uniformId];
             var uniformChanged = oldUniformValue !== uniformValue;
             oldUniformValue = uniformValue;
+			
+			var timestamp = uniformValue.currentTime;
+			var timestampChanged = oldTimestamp !== timestamp;
+			oldTimestamp = timestamp;
+			
             var texture = material._textures[uniformId];
 
             var uniformDimensionsName;
@@ -727,7 +734,7 @@ define([
             if (uniformValue instanceof HTMLVideoElement) {
                 // HTMLVideoElement.readyState >=2 means we have enough data for the current frame.
                 // See: https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/readyState
-                if (uniformValue.readyState >= 2) {
+                if (uniformValue.readyState >= 2 && timestampChanged) {
                     if (uniformChanged && defined(texture)) {
                         if (texture !== context.defaultTexture) {
                             texture.destroy();

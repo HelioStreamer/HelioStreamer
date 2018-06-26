@@ -154,22 +154,24 @@ ScalableVideoStreamer.prototype.lookForNewZoomingLevel = function() {
   // We look for the first matching zooming level and activate it.
   // XXX To high zoom factor results in too long loading time of all tiles.
   // XXX Maybe use the same technique as for the synchronizers
+  var newZoom = -1;
   for(var i = this.zooms.length-1; i >= 0; i--) {
     if(this.zooms[i].isInRange(height)) {
-      if(this.activeZoom != i) {
-        this.zooms[this.activeZoom].tiles.forEach(function(tile) {
-          tile.show = false;
-        });
-        this.activeZoom = i;
-        // currently no target
-        this.targetIndex = -1;
-        this.zooms[this.activeZoom].tiles.forEach(function(tile) {
-          tile.show = true;
-        });
-      }
-      // We found the best matching zooming level. 
-      return;
-    }
+	  newZoom = i;
+	  break;
+	}
+  }
+  
+  if(this.activeZoom != newZoom && newZoom != -1) {
+	this.zooms[this.activeZoom].tiles.forEach(function(tile) {
+	  tile.show = false;
+	});
+	this.activeZoom = newZoom;
+	// currently no target
+	this.targetIndex = -1;
+	this.zooms[this.activeZoom].tiles.forEach(function(tile) {
+	  tile.show = true;
+	});
   }
 }
 
