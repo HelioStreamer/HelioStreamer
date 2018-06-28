@@ -1,4 +1,4 @@
-function ScalableVideoStreamer(zooms, targetFPS = 25) {
+function ScalableVideoStreamer(zooms, targetFPS = 25, colorTable = LUT["Gray"]) {
   // Subfunctions work with this object.
   // We use self instead of this so we can be sure that we always take the right object.
   // Thanks javascript.
@@ -18,7 +18,6 @@ function ScalableVideoStreamer(zooms, targetFPS = 25) {
       sceneModePicker: false,
       geocoder: false,
       imageryProvider: false,
-      // Atmosphere could be the animation around the sun...
       skyAtmosphere: false, 
       targetFrameRate: targetFPS
   });
@@ -51,12 +50,26 @@ function ScalableVideoStreamer(zooms, targetFPS = 25) {
   // The tile which is played. All tiles around will also be played.
   self.targetIndex = 0;
   
+  // Init color table texture
+  var colorTexture = new Cesium.Texture({
+      context : self.viewer.scene.context,
+      pixelFormat : Cesium.PixelFormat.RGBA,
+      pixelDatatype : Cesium.PixelDatatype.UNSIGNED_BYTE,
+      width : 256,
+      height : 1,
+      source : {
+          arrayBufferView : colorTable
+      }
+  });
+  
   // We generate the tiles and add it to the scene.
   // The current zooming level is displayed while the others are hidden.
   self.zooms.forEach(function(z, i) {
-    z.generateTiles(self.viewer, self.activeZoom == i);
+    z.generateTiles(self.viewer, colorTexture, self.activeZoom == i);
   });
   
+  // Select correct zooming level on startup.
+  self.lookForNewZoomingLevel();
   // Take the current targeted videos and add them to the synchronizers.
   self.synchronizeVideosOnTarget();
   
@@ -184,18 +197,14 @@ ScalableVideoStreamer.prototype.synchronizeVideosOnTarget = function() {
 }
 
 // Returns the tile in the screen center
-ScalableVideoStreamer.prototype.indexOfCenteredTile = function() {
-  var tiles = this.zooms[this.activeZoom].tiles;
-  
-  var screenWidthCenter = this.viewer.scene.drawingBufferWidth/2;
-  var screenHightCenter = this.viewer.scene.drawingBufferHeight/2;
-  var activeTile = this.viewer.scene.pick(Cesium.Cartesian2.fromElements(screenWidthCenter, screenHightCenter));
-  if(activeTile == null)
-    return -1;
-  activeTile = activeTile.primitive;
-  for(var i = 0; i < tiles.length; i++) {
-    if(tiles[i] == activeTile)
-      return i;
-  }
+ScalableVideoStreamer.prototype.indexOfCenteredTile = function(zoom = this.activeZoom) {
+  var xTiles = this.zooms[zoom].xTiles;
+  var yTiles = this.zooms[zoom].yTiles;
+  var xPosition = (1 + (this.viewer.camera.positionCartographic.longitude / Math.PI)) * xTiles;
+  var yPosition = (0.5 - (this.viewer.camera.positionCartographic.latitude / Math.PI)) * yTiles;
+  var index = Math.floor(xPosition) * yTiles + Math.floor(yPosition);
+      
+  if(index < this.zooms[zoom].tiles.length && index >= 0)
+    return index;
   return -1;
 }
