@@ -7,6 +7,7 @@ function ScalableVideoStreamer(zooms, targetFPS = 25, colorTable = LUT["Gray"]) 
   self.zooms = zooms;
   
   // We sort them so we don't need to iterate over the whole list when zooming
+  // Having the highest zoom level first results in faster percieved loading because the first tile will already cover the whole globe.
   self.zooms.sort(function(a, b) {
     return a.maxZoomLevel < b.maxZoomLevel;
   });
@@ -151,16 +152,12 @@ ScalableVideoStreamer.prototype.lookForNewZoomingLevel = function() {
   // In order to find a good height for scaling - add the following line and look at the console
   // console.log(height);
   
-  // We look for the first matching zooming level and activate it.
-  // XXX To high zoom factor results in too long loading time of all tiles.
+  // We look for the closest (last in default order, thus the reverse()) matching zooming level and activate it.
+  // XXX Too high zoom factor results in too long loading time of all tiles.
   // XXX Maybe use the same technique as for the synchronizers
-  var newZoom = -1;
-  for(var i = this.zooms.length-1; i >= 0; i--) {
-    if(this.zooms[i].isInRange(height)) {
-	  newZoom = i;
-	  break;
-	}
-  }
+  var newZoom = this.zooms.length - 1 - this.zooms.slice().reverse().findIndex(function(zoom){
+	return zoom.isInRange(height);
+  });
   
   if(this.activeZoom != newZoom && newZoom != -1) {
 	this.zooms[this.activeZoom].tiles.forEach(function(tile) {
