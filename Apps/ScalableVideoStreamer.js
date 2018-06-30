@@ -44,6 +44,9 @@ function ScalableVideoStreamer(zooms, targetFPS = 25, colorTable = LUT["Gray"]) 
         clockScale: 1
     }));
   }
+  
+  //the maximum speedup factor relative to the set time scaling that can be achieved with the animation widget
+  self.maxSpeedupFactor = 4;
 
   // We define the variables that are required for zooming and playing selective videos.
   // Zooming level
@@ -142,6 +145,7 @@ ScalableVideoStreamer.prototype.changeTimeScaling = function(scale, changeTimeli
   this.sync.forEach(function(s) {
     s.clockScale = scale;
   });
+  this.viewer.animation.viewModel.setShuttleRingTicks([0, scale * this.maxSpeedupFactor]);
 }
 
 // Checks the current distance of the camera to the earth and searches for the matching zoom level.
