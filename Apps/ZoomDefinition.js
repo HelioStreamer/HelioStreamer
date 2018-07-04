@@ -45,7 +45,9 @@ ZoomDefinition.prototype.setVideoPlaylist = function(scale, startdate, enddate) 
       var videoUrl = self.m3u8video[i].toUTF8URL();
       
       if(Hls.isSupported()) {
-        var hls = new Hls();
+        var hls = new Hls({
+          maxBufferLength: 6
+        });
         hls.loadSource(videoUrl);
         hls.attachMedia(tile.appearance.material.uniforms.image);
       }
@@ -73,7 +75,9 @@ ZoomDefinition.prototype.generateTiles = function(viewer, colorTexture, display)
       var videoUrl = this.m3u8video[x*this.xTiles + y].toUTF8URL();
       
       if(Hls.isSupported()) {
-        var hls = new Hls();
+        var hls = new Hls({
+          maxBufferLength: 6
+        });
         hls.loadSource(videoUrl);
         hls.attachMedia(videoElement);
       }
@@ -83,7 +87,6 @@ ZoomDefinition.prototype.generateTiles = function(viewer, colorTexture, display)
       
       var videoMaterial = new Cesium.Material({
         fabric : {
-            type : "Image",
             uniforms : {
                 image : Cesium.Material.DefaultImageId,
                 colorMap : Cesium.Material.DefaultImageId
