@@ -90,18 +90,23 @@
     // Define different zoom settings. 
     // The globe is the earth that we redraw so zoom height is not the same as the real world distances.
     var zooms = [];
-    zooms.push(new ZoomDefinition(1, 1, 80000000, 'http://localhost:8080/Apps/fullts/t1_{1}-{0}l{2}.ts'));
-    zooms.push(new ZoomDefinition(2, 2, 30000000, 'http://localhost:8080/Apps/fullts/t4_{1}-{0}l{2}.ts'));
-    zooms.push(new ZoomDefinition(4, 4, 17000000, 'http://localhost:8080/Apps/fullts/t16_{1}-{0}l{2}.ts'));
-    zooms.push(new ZoomDefinition(8, 8, 11000000, 'http://localhost:8080/Apps/fullts/t64_{1}-{0}l{2}.ts'));
+    zooms.push(new ZoomDefinition(1, 1, 80000000, 'http://localhost:8080/Apps/videos/x{3}/t1_{1}-{0}l{2}.ts'));
+    zooms.push(new ZoomDefinition(2, 2, 30000000, 'http://localhost:8080/Apps/videos/x{3}/t4_{1}-{0}l{2}.ts'));
+    zooms.push(new ZoomDefinition(4, 4, 17000000, 'http://localhost:8080/Apps/videos/x{3}/t16_{1}-{0}l{2}.ts'));
+    zooms.push(new ZoomDefinition(8, 8, 11000000, 'http://localhost:8080/Apps/videos/x{3}/t64_{1}-{0}l{2}.ts'));
     
-    zooms[0].setVideoPlaylist(750, new Date(), new Date())
-    zooms[1].setVideoPlaylist(750, new Date(), new Date())
-    zooms[2].setVideoPlaylist(750, new Date(), new Date())
-    zooms[3].setVideoPlaylist(750, new Date(), new Date())
+    zooms[0].setVideoPlaylist(1, new Date(), new Date())
+    zooms[1].setVideoPlaylist(1, new Date(), new Date())
+    zooms[2].setVideoPlaylist(1, new Date(), new Date())
+    zooms[3].setVideoPlaylist(1, new Date(), new Date())
     
     var streamer = new ScalableVideoStreamer(zooms, 60, LUT["SDO-AIA 171 \u212B"]);
     streamer.viewer.scene.debugShowFramesPerSecond = true;
+    
+    function changeScaling() {
+      streamer.setVideoPlaylist(64, new Date(), new Date());
+      streamer.changeTimeScaling(750*64);
+    }
     
     // Test values
     // Default is FPS*30 because a frame represents 30s

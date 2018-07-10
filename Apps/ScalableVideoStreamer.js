@@ -102,7 +102,7 @@ function ScalableVideoStreamer(zooms, targetFPS = 25, colorTable = LUT["Gray"]) 
 
 // Change video path of all videos
 // This will only change the videos - time and scaling should be changed too
-ScalableVideoStreamer.prototype.setVideoPath = function(scale, startdate, enddate) {
+ScalableVideoStreamer.prototype.setVideoPlaylist = function(scale, startdate, enddate) {
   // We stop the time when loading a new video source
   this.viewer.clock.shouldAnimate = false;
   this.zooms.forEach(function(zoom) {

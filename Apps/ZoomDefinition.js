@@ -33,7 +33,7 @@ ZoomDefinition.prototype.setVideoPlaylist = function(scale, startdate, enddate) 
       // Add video for each timescale.
       noVids = 20;
       for(var i = 0; i < noVids; i++) {
-        m3u8.addTrack(self.videopath.format(/*scale, startdate.toISOString(), */x, y, i), 2);
+        m3u8.addTrack(self.videopath.format(/*scale, startdate.toISOString(), */x, y, i, scale), 2);
         m3u8.addDiscontinuity();
         date.setSeconds(date.getSeconds() + scale);
       }

@@ -78,7 +78,7 @@ M3U8.prototype.toUTF8String = function() {
 
 M3U8.prototype.toUTF8URL = function() {
   var utf8string = this.toUTF8String();
-  return URL.createObjectURL(new Blob([utf8string]));
+  return URL.createObjectURL(new Blob([utf8string], {type: 'application/vnd.apple.mpegurl'}));
 }
 
 M3U8.prototype.wrapIntoStreamURL = function(bandwidth, programId, codecs) {
