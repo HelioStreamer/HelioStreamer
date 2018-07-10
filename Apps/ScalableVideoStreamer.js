@@ -24,7 +24,7 @@ function ScalableVideoStreamer(zooms, targetFPS = 25, colorTable = LUT["Gray"]) 
   });
   
   // Globe color is blue by default.
-  // Change it to gray so it matches the video files.
+  // Change it to black so it matches the video files.
   self.viewer.scene.globe.material =  Cesium.Material.fromType('Color');
   self.viewer.scene.globe.material.uniforms.color = new Cesium.Color(0.0, 0.0, 0.0, 1.0);
   
@@ -57,7 +57,7 @@ function ScalableVideoStreamer(zooms, targetFPS = 25, colorTable = LUT["Gray"]) 
   self.targetIndex = 0;
   
   // Init color table texture
-  var colorTexture = new Cesium.Texture({
+  self.colorTexture = new Cesium.Texture({
       context : self.viewer.scene.context,
       pixelFormat : Cesium.PixelFormat.RGBA,
       pixelDatatype : Cesium.PixelDatatype.UNSIGNED_BYTE,
@@ -71,7 +71,7 @@ function ScalableVideoStreamer(zooms, targetFPS = 25, colorTable = LUT["Gray"]) 
   // We generate the tiles and add it to the scene.
   // The current zooming level is displayed while the others are hidden.
   self.zooms.forEach(function(z, i) {
-    z.generateTiles(self.viewer, colorTexture, self.activeZoom == i);
+    z.generateTiles(self.viewer, self.colorTexture, self.activeZoom == i);
   });
   
   // Select correct zooming level on startup.
@@ -104,12 +104,17 @@ function ScalableVideoStreamer(zooms, targetFPS = 25, colorTable = LUT["Gray"]) 
 
 // Change video path of all videos
 // This will only change the videos - time and scaling should be changed too
-ScalableVideoStreamer.prototype.setVideoPath = function(videoPath) {
+ScalableVideoStreamer.prototype.setVideoPlaylist = function(scale, startdate, enddate) {
   // We stop the time when loading a new video source
   this.viewer.clock.shouldAnimate = false;
   this.zooms.forEach(function(zoom) {
-    zoom.setVideoPath(videoPath);
+    zoom.setVideoPlaylist(scale, startdate, enddate);
   });
+}
+
+// Change the color table of the color texture
+ScalableVideoStreamer.prototype.setColorTable = function(colorTable) {
+  this.colorTexture.copyFrom({arrayBufferView: colorTable, width: 256, height: 1}, 0, 0);
 }
 
 
@@ -163,8 +168,6 @@ ScalableVideoStreamer.prototype.lookForNewZoomingLevel = function() {
   // console.log(height);
   
   // We look for the closest (last in default order, thus the reverse()) matching zooming level and activate it.
-  // XXX Too high zoom factor results in too long loading time of all tiles.
-  // XXX Maybe use the same technique as for the synchronizers
   var newZoom = this.zooms.length - 1 - this.zooms.slice().reverse().findIndex(function(zoom){
 	return zoom.isInRange(height);
   });

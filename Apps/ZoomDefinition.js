@@ -33,7 +33,7 @@ ZoomDefinition.prototype.setVideoPlaylist = function(scale, startdate, enddate) 
       // Add video for each timescale.
       noVids = 20;
       for(var i = 0; i < noVids; i++) {
-        m3u8.addTrack(self.videopath.format(/*scale, startdate.toISOString(), */x, y, i), 2);
+        m3u8.addTrack(self.videopath.format(/*scale, startdate.toISOString(), */x, y, i, scale), 2);
         m3u8.addDiscontinuity();
         date.setSeconds(date.getSeconds() + scale);
       }
@@ -45,7 +45,9 @@ ZoomDefinition.prototype.setVideoPlaylist = function(scale, startdate, enddate) 
       var videoUrl = self.m3u8video[i].toUTF8URL();
       
       if(Hls.isSupported()) {
-        var hls = new Hls();
+        var hls = new Hls({
+          maxBufferLength: 6
+        });
         hls.loadSource(videoUrl);
         hls.attachMedia(tile.appearance.material.uniforms.image);
       }
@@ -73,7 +75,9 @@ ZoomDefinition.prototype.generateTiles = function(viewer, colorTexture, display)
       var videoUrl = this.m3u8video[x*this.xTiles + y].toUTF8URL();
       
       if(Hls.isSupported()) {
-        var hls = new Hls();
+        var hls = new Hls({
+          maxBufferLength: 6
+        });
         hls.loadSource(videoUrl);
         hls.attachMedia(videoElement);
       }
@@ -83,7 +87,6 @@ ZoomDefinition.prototype.generateTiles = function(viewer, colorTexture, display)
       
       var videoMaterial = new Cesium.Material({
         fabric : {
-            type : "Image",
             uniforms : {
                 image : Cesium.Material.DefaultImageId,
                 colorMap : Cesium.Material.DefaultImageId
