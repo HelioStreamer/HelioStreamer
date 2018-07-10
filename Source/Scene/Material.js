@@ -724,7 +724,11 @@ define([
 			
 			var timestamp = uniformValue.currentTime;
 			var timestampChanged = oldTimestamp !== timestamp;
-			oldTimestamp = timestamp;
+			// when seeking in a paused video, timestamp changes when triggering a seek, but not when the seek is complete 
+			if (!uniformValue.seeking) {
+				oldTimestamp = timestamp;
+			}
+			
 			
             var texture = material._textures[uniformId];
 

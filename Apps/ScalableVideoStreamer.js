@@ -41,12 +41,14 @@ function ScalableVideoStreamer(zooms, targetFPS = 25, colorTable = LUT["Gray"]) 
   for(var i = 0; i < 9; i++) {
     self.sync.push(new Cesium.VideoSynchronizer({
         clock : self.viewer.clock,
-        clockScale: 1
+        clockScale: 1,
+		tolerance: 0.1
     }));
   }
   
   //the maximum speedup factor relative to the set time scaling that can be achieved with the animation widget
   self.maxSpeedupFactor = 4;
+  //self.viewer.animation.viewModel.snapToTicks = true;
 
   // We define the variables that are required for zooming and playing selective videos.
   // Zooming level
@@ -145,7 +147,11 @@ ScalableVideoStreamer.prototype.changeTimeScaling = function(scale, changeTimeli
   this.sync.forEach(function(s) {
     s.clockScale = scale;
   });
-  this.viewer.animation.viewModel.setShuttleRingTicks([0, scale * this.maxSpeedupFactor]);
+  var ticks = [59, 60, 61, scale/10, scale/5, scale / 2];
+  for (var i = 1; i <= this.maxSpeedupFactor; i++){
+	  ticks.push(scale*i);
+  }
+  this.viewer.animation.viewModel.setShuttleRingTicks(ticks);
 }
 
 // Checks the current distance of the camera to the earth and searches for the matching zoom level.
