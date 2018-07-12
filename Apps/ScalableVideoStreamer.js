@@ -171,6 +171,9 @@ ScalableVideoStreamer.prototype.lookForNewZoomingLevel = function() {
   var newZoom = this.zooms.length - 1 - this.zooms.slice().reverse().findIndex(function(zoom){
 	return zoom.isInRange(height);
   });
+  // No zooming level found
+  if(newZoom == this.zooms.length)
+    return;
   
   if(this.activeZoom != newZoom && newZoom != -1) {
 	this.zooms[this.activeZoom].tiles.forEach(function(tile) {
