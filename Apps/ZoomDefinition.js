@@ -8,6 +8,12 @@ var ZoomDefinition = function (xTiles, yTiles, maxZoomLevel, videopath) {
   for(var i = 0; i < xTiles*yTiles; i++) {
     this.m3u8video[i] = new M3U8();
   }
+  // Save hls instances to destroy them on video change
+  this.hls = [];
+  
+  //XXX Following line is for demo use.
+  this.startIndexTime = new Date(Date.UTC(2018, 0, 1, 0, 0));
+  this.maxExampleVidId = 19
 }
 
 // Required for videopath.
@@ -22,8 +28,10 @@ String.prototype.format = function() {
 // scale = timedifference between videos, startdate = JS Date, enddate = JS Date.
 ZoomDefinition.prototype.setVideoPlaylist = function(scale, startdate, enddate) {
   var self = this;
-  var noVids = (enddate.getTime() / 1000 - startdate.getTime() / 1000) / scale;
-  var date = new Date(startdate)
+  var defaultScale = 900;
+  var noVids = (enddate.getTime() - startdate.getTime()) / (1000*scale*defaultScale);
+  var startIndex = Math.floor((startdate.getTime() - this.startIndexTime.getTime()) / (1000*scale*defaultScale));
+  //var date = new Date(startdate)
   
   for(var x = 0; x < this.xTiles; x++) {
     for(var y = 0; y < this.yTiles; y++) {
@@ -31,11 +39,12 @@ ZoomDefinition.prototype.setVideoPlaylist = function(scale, startdate, enddate) 
       // Remove current playlist
       m3u8.clear();
       // Add video for each timescale.
-      noVids = 20;
       for(var i = 0; i < noVids; i++) {
-        m3u8.addTrack(self.videopath.format(/*scale, startdate.toISOString(), */x, y, i, scale), 2);
-        m3u8.addDiscontinuity();
-        date.setSeconds(date.getSeconds() + scale);
+		if(i+startIndex <= self.maxExampleVidId) {
+			m3u8.addTrack(self.videopath.format(x, y, startIndex+i, scale), 2);
+			m3u8.addDiscontinuity();
+		}
+        //date.setSeconds(date.getSeconds() + scale);
       }
     }
   }
@@ -44,12 +53,14 @@ ZoomDefinition.prototype.setVideoPlaylist = function(scale, startdate, enddate) 
     self.tiles.forEach(function (tile, i) {
       var videoUrl = self.m3u8video[i].toUTF8URL();
       
+      if(self.hls.length > i)
+        self.hls[i].destroy();
       if(Hls.isSupported()) {
-        var hls = new Hls({
+        self.hls[i] = new Hls({
           maxBufferLength: 6
         });
-        hls.loadSource(videoUrl);
-        hls.attachMedia(tile.appearance.material.uniforms.image);
+        self.hls[i].loadSource(videoUrl);
+        self.hls[i].attachMedia(tile.appearance.material.uniforms.image);
       }
       else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         tile.appearance.material.uniforms.image.src = videoUrl;
@@ -72,17 +83,17 @@ ZoomDefinition.prototype.generateTiles = function(viewer, colorTexture, display)
       videoElement.muted = true;
       videoElement.loop = true;
       
-      var videoUrl = this.m3u8video[x*this.xTiles + y].toUTF8URL();
+      var i = x*this.xTiles + y;
+      var videoUrl = this.m3u8video[i].toUTF8URL();
       
+      if(this.hls.length > i)
+        this.hls[i].destroy();
       if(Hls.isSupported()) {
-        var hls = new Hls({
+        this.hls[i] = new Hls({
           maxBufferLength: 6
         });
-        hls.loadSource(videoUrl);
-        hls.attachMedia(videoElement);
-      }
-      else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        videoElement.src = videoUrl;
+        this.hls[i].loadSource(videoUrl);
+        this.hls[i].attachMedia(videoElement);
       }
       
       var videoMaterial = new Cesium.Material({

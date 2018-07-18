@@ -41,6 +41,8 @@ function ScalableVideoStreamer(zooms, targetFPS = 25, colorTable = LUT["Gray"]) 
   for(var i = 0; i < 9; i++) {
     self.sync.push(new Cesium.VideoSynchronizer({
         clock : self.viewer.clock,
+		//XXX Demo stuff
+		epoch : Cesium.JulianDate.fromIso8601("2018-01-01T00:00:00"),
         clockScale: 1,
 		tolerance: 0.1
     }));
@@ -126,11 +128,8 @@ ScalableVideoStreamer.prototype.setStartTime = function(startTime, reset = true,
   // Set start time of the clock
   self.viewer.clock.startTime = Cesium.JulianDate.fromIso8601(startTime);
   // Change timeline to current time.
-  self.viewer.timeline.zoomTo(self.viewer.clock.startTime, self.viewer.clock.stopTime);
-  // Change synchronizers of videos to this time.
-  self.sync.forEach(function(s) {
-    s.epoch = self.viewer.clock.startTime;
-  });
+  if(self.viewer.clock.startTime < self.viewer.clock.stopTime)
+    self.viewer.timeline.zoomTo(self.viewer.clock.startTime, self.viewer.clock.stopTime);
   // If the current time is set to start time
   if(reset)
     self.viewer.clock.currentTime = self.viewer.clock.startTime;
@@ -141,7 +140,8 @@ ScalableVideoStreamer.prototype.setEndTime = function(endTime) {
   // Set stop time of the clock
   this.viewer.clock.stopTime = Cesium.JulianDate.fromIso8601(endTime);
   // Change timeline to current time.
-  this.viewer.timeline.zoomTo(this.viewer.clock.startTime, this.viewer.clock.stopTime);
+  if(this.viewer.clock.startTime < this.viewer.clock.stopTime)
+    this.viewer.timeline.zoomTo(this.viewer.clock.startTime, this.viewer.clock.stopTime);
 }
 
 // Change the timescaling of the video.
@@ -171,9 +171,9 @@ ScalableVideoStreamer.prototype.lookForNewZoomingLevel = function() {
   var newZoom = this.zooms.length - 1 - this.zooms.slice().reverse().findIndex(function(zoom){
 	return zoom.isInRange(height);
   });
-  // No zooming level found
-  if(newZoom == this.zooms.length)
-    return;
+  
+  if(newZoom > this.zooms.length-1)
+      return;
   
   if(this.activeZoom != newZoom && newZoom != -1) {
 	this.zooms[this.activeZoom].tiles.forEach(function(tile) {

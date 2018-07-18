@@ -73,13 +73,12 @@
       -
       <input class="datetime input" id="end" type="text" placeholder="Select end date" data-input>
       Playback-Speed:
-      <select class="input" onchange="changeScaling()" id="timescale">
+      <select class="input" id="timescale" onchange="loadNewScaling()">
         <option value="1">1x</option>
-        <option value="2">2x</option>
         <option value="4">4x</option>
-        <option value="8">8x</option>
         <option value="16">16x</option>
-        <option value="32">32x</option>
+        <option value="64">64x</option>
+        <option value="256">256x</option>
       </select>
       <button class="cesium-button" id="load" onclick="loadNewVideo()">Load Video</button>
     </div>
@@ -87,32 +86,69 @@
   
   <script>
     'use strict';
+	// Loaded from server
+	var minAvailableDate = new Date(Date.UTC(2018, 0, 1, 0, 0));
+	var maxAvailableDate = new Date(minAvailableDate);
+	maxAvailableDate.setSeconds(minAvailableDate.getSeconds()+900*2*20);
+	
+	// Fix for flatpickr
+	minAvailableDate.setMinutes(minAvailableDate.getMinutes()+minAvailableDate.getTimezoneOffset());
+	maxAvailableDate.setMinutes(maxAvailableDate.getMinutes()+maxAvailableDate.getTimezoneOffset());
+	
+	// Init Date Picker
+	var startdatePicker = flatpickr("#start", {
+      enableTime: true,
+      time_24hr: true,
+      dateFormat: "d.m.Y H:i \\UTC",
+	  defaultDate: minAvailableDate,
+      minDate: minAvailableDate,
+      maxDate: maxAvailableDate
+    });
+    var enddatePicker = flatpickr("#end", {
+      enableTime: true,
+      time_24hr: true,
+      dateFormat: "d.m.Y H:i \\UTC",
+	  defaultDate: maxAvailableDate,
+      maxDate: maxAvailableDate
+    });
+	
+    // Init Load Video Handler
+    function loadNewVideo() {
+      var startdate = new Date(startdatePicker.selectedDates[0]);
+      var enddate = new Date(enddatePicker.selectedDates[0]);
+	  // Fix Timezone
+	  startdate.setMinutes(startdate.getMinutes()-startdate.getTimezoneOffset());
+	  enddate.setMinutes(enddate.getMinutes()-enddate.getTimezoneOffset());
+	  
+	  var e = document.getElementById("timescale");
+	  var timescale = e.options[e.selectedIndex].value;
+      streamer.setVideoPlaylist(timescale, startdate, enddate);
+      streamer.changeTimeScaling(900*timescale);
+      streamer.setStartTime(startdate.toISOString());
+      streamer.setEndTime(enddate.toISOString());
+    }
+	
+	function loadNewScaling() {			
+      var e = document.getElementById("timescale");
+      var timescale = e.options[e.selectedIndex].value;
+      var newMaxAvailableDate = new Date(minAvailableDate);
+      newMaxAvailableDate.setSeconds(minAvailableDate.getSeconds()+900*2*20*timescale);
+	  startdatePicker.set("maxDate", newMaxAvailableDate)
+	  enddatePicker.set("maxDate", newMaxAvailableDate)
+	}
+	
     // Define different zoom settings. 
     // The globe is the earth that we redraw so zoom height is not the same as the real world distances.
     var zooms = [];
-    zooms.push(new ZoomDefinition(1, 1, 80000000, 'http://localhost:8080/Apps/videos/x{3}/t1_{1}-{0}l{2}.ts'));
-    zooms.push(new ZoomDefinition(2, 2, 30000000, 'http://localhost:8080/Apps/videos/x{3}/t4_{1}-{0}l{2}.ts'));
-    zooms.push(new ZoomDefinition(4, 4, 17000000, 'http://localhost:8080/Apps/videos/x{3}/t16_{1}-{0}l{2}.ts'));
-    zooms.push(new ZoomDefinition(8, 8, 11000000, 'http://localhost:8080/Apps/videos/x{3}/t64_{1}-{0}l{2}.ts'));
-    
-    zooms[0].setVideoPlaylist(1, new Date(), new Date())
-    zooms[1].setVideoPlaylist(1, new Date(), new Date())
-    zooms[2].setVideoPlaylist(1, new Date(), new Date())
-    zooms[3].setVideoPlaylist(1, new Date(), new Date())
+    zooms.push(new ZoomDefinition(1, 1, 80000000, 'http://86.119.40.9/Viewer/3/videos/x{3}/t1_{1}-{0}l{2}.ts'));
+    zooms.push(new ZoomDefinition(2, 2, 30000000, 'http://86.119.40.9/Viewer/3/videos/x{3}/t4_{1}-{0}l{2}.ts'));
+    zooms.push(new ZoomDefinition(4, 4, 17000000, 'http://86.119.40.9/Viewer/3/videos/x{3}/t16_{1}-{0}l{2}.ts'));
+    zooms.push(new ZoomDefinition(8, 8, 11000000, 'http://86.119.40.9/Viewer/3/videos/x{3}/t64_{1}-{0}l{2}.ts'));
     
     var streamer = new ScalableVideoStreamer(zooms, 60, LUT["SDO-AIA 171 \u212B"]);
     streamer.viewer.scene.debugShowFramesPerSecond = true;
     
-    function changeScaling() {
-      streamer.setVideoPlaylist(64, new Date(), new Date());
-      streamer.changeTimeScaling(900*64);
-    }
-    
-    // Test values
-    // Default is FPS*30 because a frame represents 30s
-    streamer.changeTimeScaling(750);
-    streamer.setStartTime("2018-04-26T10:00:00");
-    streamer.setEndTime("2018-04-26T18:20:00");
+    loadNewVideo()
   </script>
 </body>
 </html>
