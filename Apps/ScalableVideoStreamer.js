@@ -42,7 +42,7 @@ function ScalableVideoStreamer(zooms, targetFPS = 25, colorTable = LUT["Gray"]) 
     self.sync.push(new Cesium.VideoSynchronizer({
         clock : self.viewer.clock,
 		//XXX Demo stuff
-		epoch : Cesium.JulianDate.fromIso8601("2018-01-01T00:00:00"),
+		epoch : Cesium.JulianDate.fromIso8601("2018-01-01T00:00:00+00:00"),
         clockScale: 1,
 		tolerance: 0.1
     }));
