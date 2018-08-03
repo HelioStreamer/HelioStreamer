@@ -116,7 +116,7 @@ define([
                 ms = (msElapsedTime / this._msFrameCount).toFixed(2);
             }
 
-            this._msText.nodeValue = ms + ' MS';
+            this._msText.nodeValue = ms + ' ms';
             this._lastMsSampleTime = time;
             this._msFrameCount = 0;
         }
