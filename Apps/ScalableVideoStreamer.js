@@ -1,4 +1,8 @@
 function ScalableVideoStreamer(zooms, targetFPS = 25, colorTable = LUT["Gray"]) {
+  // Set camera position.
+  Cesium.Camera.DEFAULT_VIEW_FACTOR = 0.5;
+  Cesium.Camera.DEFAULT_VIEW_RECTANGLE = Cesium.Rectangle.fromDegrees(-180, -90, 0, 90);
+  
   // Subfunctions work with this object.
   // We use self instead of this so we can be sure that we always take the right object.
   // Thanks javascript.
