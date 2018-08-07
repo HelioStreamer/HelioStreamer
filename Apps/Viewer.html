@@ -81,10 +81,7 @@
   <div id="cesiumContainer"></div>
   <div class=".cesium-viewer">
     <div class="toolbar-left">
-      <input class="datetime input" id="start" type="text" placeholder="Select start date" data-input>
-      -
-      <input class="datetime input" id="end" type="text" placeholder="Select end date" data-input>
-      Playback-Speed:
+		Playback-Speed:
       <select class="input" id="timescale" onchange="loadNewScaling()">
         <option value="1">1x</option>
         <option value="4">4x</option>
@@ -92,6 +89,11 @@
         <option value="64">64x</option>
         <option value="256">256x</option>
       </select>
+	  
+      <input class="datetime input" id="start" type="text" placeholder="Select start date" data-input>
+      -
+      <input class="datetime input" id="end" type="text" placeholder="Select end date" data-input>
+      
       <button class="cesium-button" id="load" onclick="loadNewVideo()">Load Video</button>
     </div>
   </div>

@@ -116,6 +116,7 @@ ScalableVideoStreamer.prototype.setVideoPlaylist = function(scale, startdate, en
   this.zooms.forEach(function(zoom) {
     zoom.setVideoPlaylist(scale, startdate, enddate);
   });
+  this.synchronizeVideosOnTarget();
 }
 
 // Change the color table of the color texture
@@ -210,6 +211,7 @@ ScalableVideoStreamer.prototype.synchronizeVideosOnTarget = function() {
       var index = this.targetIndex+i*this.zooms[this.activeZoom].xTiles+j;
       if(index < this.zooms[this.activeZoom].tiles.length && index >= 0) {
         this.sync[syncIndex++].element = this.zooms[this.activeZoom].tiles[index].appearance.material.uniforms.image;
+		this.zooms[this.activeZoom].extendBuffer(index);
       }
     }
   }
