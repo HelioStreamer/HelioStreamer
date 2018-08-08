@@ -57,7 +57,7 @@ ZoomDefinition.prototype.setVideoPlaylist = function(scale, startdate, enddate) 
         self.hls[i].destroy();
       if(Hls.isSupported()) {
         self.hls[i] = new Hls({
-          maxBufferLength: 6
+          maxBufferLength: 2
         });
         self.hls[i].loadSource(videoUrl);
         self.hls[i].attachMedia(tile.appearance.material.uniforms.image);
@@ -84,17 +84,6 @@ ZoomDefinition.prototype.generateTiles = function(viewer, colorTexture, display)
       videoElement.loop = true;
       
       var i = x*this.xTiles + y;
-      var videoUrl = this.m3u8video[i].toUTF8URL();
-      
-      if(this.hls.length > i)
-        this.hls[i].destroy();
-      if(Hls.isSupported()) {
-        this.hls[i] = new Hls({
-          maxBufferLength: 6
-        });
-        this.hls[i].loadSource(videoUrl);
-        this.hls[i].attachMedia(videoElement);
-      }
       
       var videoMaterial = new Cesium.Material({
         fabric : {
@@ -129,6 +118,12 @@ ZoomDefinition.prototype.generateTiles = function(viewer, colorTexture, display)
       })));
     }
   }
+}
+
+ZoomDefinition.prototype.extendBuffer = function(tileIndex){
+	if(Hls.isSupported() && this.hls.length > tileIndex) {
+		this.hls[tileIndex].config.maxBufferLength = 6;
+	}
 }
 
 ZoomDefinition.prototype.isInRange = function(magnitude) {
