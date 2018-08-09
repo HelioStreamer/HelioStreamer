@@ -27,6 +27,9 @@ function ScalableVideoStreamer(zooms, targetFPS = 25, colorTable = LUT["Gray"]) 
       targetFrameRate: targetFPS
   });
   
+  // Credits display not needed.
+  self.viewer.scene.frameState.creditDisplay.destroy();
+  
   // Globe color is blue by default.
   // Change it to black so it matches the video files.
   self.viewer.scene.globe.material =  Cesium.Material.fromType('Color');
