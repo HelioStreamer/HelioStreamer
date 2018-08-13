@@ -10,9 +10,9 @@ In order to optimize CesiumJS for our project, several files of CesiumJS were re
 The whole Apps folder is replaced with the file required for the HelioStreamer. 
 
 In the Source folder the following files are modified:
- * Source/Core/VideoSynchronizer.js -- Added a time scaling so videos can run faster or slower than the CesiumJS Viewer time.
- * Source/Scene/Material.js -- Added optimizations for paused video files.
- * Source/Scene/PerformanceDisplay.js -- Changed 'MS' to 'ms'
+ * `Source/Core/VideoSynchronizer.js` -- Added a time scaling so videos can run faster or slower than the CesiumJS Viewer time.
+ * `Source/Scene/Material.js` -- Added optimizations for paused video files.
+ * `Source/Scene/PerformanceDisplay.js` -- Changed 'MS' to 'ms'
 
 There are also changes in the build scripts and documentation.
 
