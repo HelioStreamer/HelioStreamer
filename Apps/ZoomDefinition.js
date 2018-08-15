@@ -112,7 +112,8 @@ ZoomDefinition.prototype.generateTiles = function(viewer, colorTexture, display)
           appearance : new Cesium.EllipsoidSurfaceAppearance({
               aboveGround : false,
               material: videoMaterial,
-              translucent: false
+              translucent: false,
+              flat: true // disable phong shading
           }),
           show : display
       })));
