@@ -19,7 +19,7 @@ There are also changes in the build scripts and documentation.
 ### :pushpin: Installing HelioStreamer
 
 HelioStreamer can be installed on any static web server by copying the contents of ./Apps to the web server.
-For best results activate CORS and ensure HPPT1.1 persistent connection has an appropriate timeout length (10+ seconds).
+For best results activate CORS and ensure HTTP1.1 persistent connection has an appropriate timeout length (10+ seconds).
 
 
 
